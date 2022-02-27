@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart' as Credentials;
 import 'package:flutter/material.dart';
 import 'package:tyba_challenge/handlers/firebase_handler.dart';
 import 'package:tyba_challenge/models/user.dart';
+import 'package:tyba_challenge/screens/restaurants_screens.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({Key? key}) : super(key: key);
@@ -113,6 +114,14 @@ class _SignupScreenState extends State<SignupScreen> {
                       ? () async {
                           try {
                             await createUser();
+                            await FirebaseHandler.addUsertoDB(user);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    RestaurantsScreen(user: user),
+                              ),
+                            );
                           } on Credentials.FirebaseAuthException catch (e) {
                             if (e.code == 'weak-password') {
                               error = "The password provided is too weak.";

@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart' as Credentials;
 import 'package:flutter/material.dart';
 import 'package:tyba_challenge/handlers/firebase_handler.dart';
 import 'package:tyba_challenge/models/user.dart';
+import 'package:tyba_challenge/screens/restaurants_screens.dart';
 
 class LogInScreen extends StatefulWidget {
   const LogInScreen({Key? key}) : super(key: key);
@@ -12,6 +13,7 @@ class LogInScreen extends StatefulWidget {
 
 class _LogInScreenState extends State<LogInScreen> {
   bool enabled = false;
+  String error = "";
   late User user;
 
   TextEditingController emailController = TextEditingController();
@@ -34,6 +36,7 @@ class _LogInScreenState extends State<LogInScreen> {
   Future<void> login() async {
     Credentials.UserCredential credentials = await FirebaseHandler.loginUser(
         emailController.text, passwordController.text);
+    user = await FirebaseHandler.getUserFromDB(credentials.user!.uid);
   }
 
   @override
@@ -100,8 +103,30 @@ class _LogInScreenState extends State<LogInScreen> {
                 padding: const EdgeInsets.only(top: 30),
                 child: TextButton(
                   onPressed: enabled
-                      ? () {
-                          print("Hello");
+                      ? () async {
+                          try {
+                            await login();
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    RestaurantsScreen(user: user),
+                              ),
+                            );
+                          } on Credentials.FirebaseAuthException catch (e) {
+                            if (e.code == 'user-not-found') {
+                              error = "No user found for that email.";
+                            } else if (e.code == 'wrong-password') {
+                              error = "Wrong password provided for that user.";
+                            }
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(error),
+                                backgroundColor: Colors.red.shade600,
+                              ),
+                            );
+                          }
                         }
                       : null,
                   child: const Text(
